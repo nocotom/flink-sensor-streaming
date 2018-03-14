@@ -10,7 +10,7 @@ import org.influxdb.{InfluxDB, InfluxDBFactory}
 
 import scala.math.ScalaNumber
 
-class InfluxDbSink[T <: DataPoint[ScalaNumber]](val measurement: String) extends RichSinkFunction[T] {
+class InfluxDbSink(val measurement: String) extends RichSinkFunction[DataPoint[ScalaNumber]] {
 
   @transient
   private var influxDB : InfluxDB = _
@@ -31,11 +31,11 @@ class InfluxDbSink[T <: DataPoint[ScalaNumber]](val measurement: String) extends
     influxDB.close()
   }
 
-  override def invoke(dataPoint: T): Unit = {
+  override def invoke(dataPoint: DataPoint[ScalaNumber]): Unit = {
     val point : Point = Point.measurement(measurement)
-                             .time(dataPoint.timestamp, TimeUnit.MILLISECONDS)
-                             .addField("value", dataPoint.value)
-                             .build()
+      .time(dataPoint.timestamp, TimeUnit.MILLISECONDS)
+      .addField("value", dataPoint.value)
+      .build()
 
     influxDB.write(databaseName, "autogen", point)
   }

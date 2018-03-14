@@ -1,5 +1,4 @@
 # IntelliJ
-output
 .idea
 *.iml
 build/

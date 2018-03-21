@@ -1,4 +1,4 @@
-package com.nocotom.ss.output
+package com.nocotom.ss.sink
 
 import java.util.concurrent.TimeUnit
 

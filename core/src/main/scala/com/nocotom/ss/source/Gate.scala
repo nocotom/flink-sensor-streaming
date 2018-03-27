@@ -2,7 +2,7 @@ package com.nocotom.ss.source
 
 import scala.concurrent.duration._
 
-class Locker {
+class Gate {
 
   private var _isOpen = false
 

@@ -1,41 +1,52 @@
 package com.nocotom.ss.source
 
+import java.{lang, util}
+
 import com.nocotom.ss.model.DataPoint
-import org.apache.flink.api.common.state.{ValueState, ValueStateDescriptor}
-import org.apache.flink.runtime.state.{FunctionInitializationContext, FunctionSnapshotContext}
-import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction
+import org.apache.flink.configuration.Configuration
+import org.apache.flink.streaming.api.checkpoint.ListCheckpointed
 import org.apache.flink.streaming.api.functions.source.{RichParallelSourceFunction, SourceFunction}
 import org.apache.flink.streaming.api.watermark.Watermark
 
+import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
 
-class TimestampSource(private val period: FiniteDuration, private val slowdownFactor : Int)
+class TimestampSource(private val period: FiniteDuration)
   extends RichParallelSourceFunction[DataPoint[BigDecimal]]
-    with CheckpointedFunction {
+    with ListCheckpointed[lang.Long] {
 
-  private val STATE_KEY = "TIMESTAMP_SOURCE_STATE"
-  private lazy val locker = new Locker()
-  private var currentTime : Long = 0
+  private lazy val gate = new Gate()
+  private var currentTime : Long = 0L
 
-  override def cancel(): Unit = locker.open()
-
-  override def run(sourceContext: SourceFunction.SourceContext[DataPoint[BigDecimal]]): Unit = {
-    while(!locker.await(period)){
-      sourceContext.collectWithTimestamp(new DataPoint[BigDecimal](currentTime, BigDecimal(0)), currentTime)
-      sourceContext.emitWatermark(new Watermark(currentTime))
-      currentTime += period.toMillis
+  override def open(parameters: Configuration): Unit = {
+    if(currentTime == 0){
+      currentTime = now
     }
   }
 
-  override def snapshotState(context: FunctionSnapshotContext): Unit = {
-    this.getState.update(currentTime)
+  override def cancel(): Unit = gate.open()
+
+  override def run(sourceContext: SourceFunction.SourceContext[DataPoint[BigDecimal]]): Unit = {
+    val lock = sourceContext.getCheckpointLock
+
+    while(!gate.await(period)){
+      lock.synchronized({
+        sourceContext.collectWithTimestamp(new DataPoint[BigDecimal](currentTime, BigDecimal(0)), currentTime)
+        sourceContext.emitWatermark(new Watermark(currentTime))
+        currentTime += period.toMillis
+      })
+    }
   }
 
-  override def initializeState(context: FunctionInitializationContext): Unit = {
-    currentTime = this.getState.value()
+  override def restoreState(state: util.List[lang.Long]): Unit = {
+    for (stateEntry <- state) {
+      currentTime = stateEntry
+    }
   }
 
-  private def getState : ValueState[Long] = {
-    getRuntimeContext.getState(new ValueStateDescriptor(STATE_KEY, classOf[Long]))
+  private def now = System.currentTimeMillis
+
+  override def snapshotState(checkpointId: Long, timestamp: Long): util.List[lang.Long] = {
+    util.Collections.singletonList(currentTime)
   }
 }

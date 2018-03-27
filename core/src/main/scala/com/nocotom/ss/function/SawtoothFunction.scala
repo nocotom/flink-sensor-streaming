@@ -1,19 +1,20 @@
 package com.nocotom.ss.function
 
+import java.{lang, util}
+
 import com.nocotom.ss.model.DataPoint
 import org.apache.flink.api.common.functions.RichMapFunction
-import org.apache.flink.api.common.state.{ValueState, ValueStateDescriptor}
-import org.apache.flink.runtime.state.{FunctionInitializationContext, FunctionSnapshotContext}
-import org.apache.flink.streaming.api.checkpoint.CheckpointedFunction
+import org.apache.flink.streaming.api.checkpoint.ListCheckpointed
+
+import scala.collection.JavaConversions._
 
 /**
   * y(t) = t - floor(t)
   */
 class SawtoothFunction(private val stepsAmount: Int = 10)
   extends RichMapFunction[DataPoint[BigDecimal], DataPoint[BigDecimal]]
-    with CheckpointedFunction {
+    with ListCheckpointed[lang.Integer] {
 
-  private val STATE_KEY = "SAWTOOTH_FUNCTION_STATE"
   private var currentStep = 0
 
   override def map(dataPoint : DataPoint[BigDecimal]): DataPoint[BigDecimal] = {
@@ -22,15 +23,13 @@ class SawtoothFunction(private val stepsAmount: Int = 10)
     dataPoint.withNewValue(phase)
   }
 
-  override def snapshotState(context: FunctionSnapshotContext): Unit = {
-    this.getState.update(currentStep)
+  override def restoreState(state: util.List[lang.Integer]): Unit = {
+    for (stateEntry <- state) {
+      currentStep = stateEntry
+    }
   }
 
-  override def initializeState(context: FunctionInitializationContext): Unit = {
-    currentStep = this.getState.value()
-  }
-
-  private def getState : ValueState[Int] = {
-    getRuntimeContext.getState(new ValueStateDescriptor(STATE_KEY, classOf[Int]))
+  override def snapshotState(checkpointId: Long, timestamp: Long): util.List[lang.Integer] = {
+    util.Collections.singletonList(currentStep)
   }
 }

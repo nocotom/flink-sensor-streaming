@@ -1,0 +1,18 @@
+version: '3'
+services:
+  influxdb:
+    image: influxdb:1.5-alpine
+    container_name: influxdb
+    ports:
+      - "8083:8083"
+      - "8086:8086"
+      - "8090:8090"
+    environment:
+      - INFLUXDB_DB=sensors
+      - INFLUXDB_USER=admin
+      - INFLUXDB_USER_PASSWORD=admin
+  grafana:
+    image: grafana/grafana:5.0.3
+    container_name: grafana
+    ports:
+      - "3000:3000"

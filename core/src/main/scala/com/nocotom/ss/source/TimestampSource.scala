@@ -2,7 +2,7 @@ package com.nocotom.ss.source
 
 import java.{lang, util}
 
-import com.nocotom.ss.model.DataPoint
+import com.nocotom.ss.model.{DataPoint, TimePoint}
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.checkpoint.ListCheckpointed
 import org.apache.flink.streaming.api.functions.source.{RichParallelSourceFunction, SourceFunction}
@@ -12,7 +12,7 @@ import scala.collection.JavaConversions._
 import scala.concurrent.duration.FiniteDuration
 
 class TimestampSource(private val period: FiniteDuration)
-  extends RichParallelSourceFunction[DataPoint[BigDecimal]]
+  extends RichParallelSourceFunction[TimePoint]
     with ListCheckpointed[lang.Long] {
 
   private lazy val gate = new Gate()
@@ -26,12 +26,12 @@ class TimestampSource(private val period: FiniteDuration)
 
   override def cancel(): Unit = gate.open()
 
-  override def run(sourceContext: SourceFunction.SourceContext[DataPoint[BigDecimal]]): Unit = {
+  override def run(sourceContext: SourceFunction.SourceContext[TimePoint]): Unit = {
     val lock = sourceContext.getCheckpointLock
 
     while(!gate.await(period)){
       lock.synchronized({
-        sourceContext.collectWithTimestamp(new DataPoint[BigDecimal](currentTime, BigDecimal(0)), currentTime)
+        sourceContext.collectWithTimestamp(TimePoint(currentTime), currentTime)
         sourceContext.emitWatermark(new Watermark(currentTime))
         currentTime += period.toMillis
       })

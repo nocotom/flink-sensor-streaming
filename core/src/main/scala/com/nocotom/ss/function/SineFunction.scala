@@ -2,7 +2,8 @@ package com.nocotom.ss.function
 
 import java.{lang, util}
 
-import com.nocotom.ss.model.DataPoint
+import com.nocotom.ss.model.Point._
+import com.nocotom.ss.model.{DataPoint, TimePoint}
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.streaming.api.checkpoint.ListCheckpointed
 
@@ -15,18 +16,19 @@ import scala.collection.JavaConversions._
   *   f - frequency
   *   φ - phase
   */
-class SineFunction(private val amplitude : BigDecimal = 1, private val frequency : BigDecimal = 1, private val phase : BigDecimal = 0, private val stepsAmount: Int = 10)
-  extends RichMapFunction[DataPoint[BigDecimal], DataPoint[BigDecimal]]
+class SineFunction(private val amplitude : BigDecimal = 1, private val frequency : BigDecimal = 1, private val phase : BigDecimal = 0, private val stepsAmount: Int = 20)
+  extends RichMapFunction[TimePoint, DataPoint[BigDecimal]]
     with ListCheckpointed[lang.Integer] {
 
   private var currentStep = 0
 
-  override def map(dataPoint: DataPoint[BigDecimal]): DataPoint[BigDecimal] = {
+  override def map(timePoint: TimePoint): DataPoint[BigDecimal] = {
     val radians = 2 * math.Pi * frequency * currentStep / stepsAmount + phase
-    currentStep = currentStep % stepsAmount + 1
+    currentStep += 1
+    currentStep = currentStep % stepsAmount
 
     val result = amplitude * math.sin(radians.doubleValue())
-    dataPoint.withNewValue(result)
+    timePoint.withValue(result)
   }
 
   override def restoreState(state: util.List[lang.Integer]): Unit = {

@@ -1,35 +1,39 @@
 package com.nocotom.ss.function
 
-import java.{lang, util}
+import java.util
 
-import com.nocotom.ss.model.DataPoint
+import com.nocotom.ss.model.{DataPoint, TimePoint}
+import com.nocotom.ss.model.Point._
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.streaming.api.checkpoint.ListCheckpointed
 
 import scala.collection.JavaConversions._
 
 /**
-  * y(t) = t - floor(t)
+  * y(t) = A[t - floor(t)]
+  * Where:
+  *   A - amplitude
   */
-class SawtoothFunction(private val stepsAmount: Int = 10)
-  extends RichMapFunction[DataPoint[BigDecimal], DataPoint[BigDecimal]]
-    with ListCheckpointed[lang.Integer] {
+class SawtoothFunction(private val stepsAmount: Int = 10, private val amplitude: BigDecimal = 1)
+  extends RichMapFunction[TimePoint, DataPoint[BigDecimal]]
+    with ListCheckpointed[BigDecimal] {
 
-  private var currentStep = 0
+  private var currentStep : BigDecimal = 0
 
-  override def map(dataPoint : DataPoint[BigDecimal]): DataPoint[BigDecimal] = {
-    val phase = currentStep / stepsAmount
-    currentStep = currentStep % stepsAmount + 1
-    dataPoint.withNewValue(phase)
+  override def map(timePoint : TimePoint): DataPoint[BigDecimal] = {
+    val phase = currentStep / stepsAmount * amplitude
+    currentStep += 1
+    currentStep = currentStep % stepsAmount
+    timePoint.withValue(phase)
   }
 
-  override def restoreState(state: util.List[lang.Integer]): Unit = {
+  override def restoreState(state: util.List[BigDecimal]): Unit = {
     for (stateEntry <- state) {
       currentStep = stateEntry
     }
   }
 
-  override def snapshotState(checkpointId: Long, timestamp: Long): util.List[lang.Integer] = {
+  override def snapshotState(checkpointId: Long, timestamp: Long): util.List[BigDecimal] = {
     util.Collections.singletonList(currentStep)
   }
 }

@@ -2,7 +2,7 @@ package com.nocotom.ss.sink
 
 import java.util.concurrent.TimeUnit
 
-import com.nocotom.ss.model.DataPoint
+import com.nocotom.ss.model.KeyedDataPoint
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction
 import org.influxdb.dto.Point
@@ -10,11 +10,11 @@ import org.influxdb.{InfluxDB, InfluxDBFactory}
 
 import scala.math.ScalaNumber
 
-class InfluxDbSink(val measurement: String) extends RichSinkFunction[DataPoint[ScalaNumber]] {
+class InfluxDbSink[T <: ScalaNumber](val measurement: String) extends RichSinkFunction[KeyedDataPoint[T]] {
 
   @transient
-  private var influxDB : InfluxDB = _
-  private var databaseName : String = _
+  private var influxDB: InfluxDB = _
+  private var databaseName: String = _
 
   override def open(parameters: Configuration): Unit = {
     databaseName = parameters.getString("db", "sensors")
@@ -31,10 +31,11 @@ class InfluxDbSink(val measurement: String) extends RichSinkFunction[DataPoint[S
     influxDB.close()
   }
 
-  override def invoke(dataPoint: DataPoint[ScalaNumber]): Unit = {
-    val point : Point = Point.measurement(measurement)
+  override def invoke(dataPoint: KeyedDataPoint[T]): Unit = {
+    val point: Point = Point.measurement(measurement)
       .time(dataPoint.timestamp, TimeUnit.MILLISECONDS)
-      .addField("value", dataPoint.value)
+      .addField("value", dataPoint.value.doubleValue())
+      .tag("key", dataPoint.key)
       .build()
 
     influxDB.write(databaseName, "autogen", point)

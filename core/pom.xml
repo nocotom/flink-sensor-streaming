@@ -12,5 +12,46 @@
 
     <artifactId>sensor-streaming-core</artifactId>
 
-
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>fat-jar-filter-songs</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadeTestJar>false</shadeTestJar>
+                            <shadedArtifactAttached>false</shadedArtifactAttached>
+                            <createDependencyReducedPom>false</createDependencyReducedPom>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.nocotom.ss.Sensors</mainClass>
+                                </transformer>
+                            </transformers>
+                            <finalName>Sensors</finalName>
+                            <filters>
+                                <filter>
+                                    <artifact>*</artifact>
+                                    <includes>
+                                        <include>com/nocotom/ss/**</include>
+                                        <include>org/influxdb/**</include>
+                                        <include>okhttp3/**</include>
+                                        <include>retrofit2/**</include>
+                                        <include>okio/**</include>
+                                        <include>com/squareup/moshi/**</include>
+                                    </includes>
+                                </filter>
+                            </filters>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>

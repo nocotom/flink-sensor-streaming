@@ -8,6 +8,7 @@ import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.streaming.api.checkpoint.ListCheckpointed
 
 import scala.collection.JavaConversions._
+import scala.math.BigDecimal.RoundingMode
 
 /**
   * y(t) = A[t - floor(t)]
@@ -24,7 +25,7 @@ class SawtoothFunction(private val stepsAmount: Int = 10, private val amplitude:
     val phase = currentStep / stepsAmount * amplitude
     currentStep += 1
     currentStep = currentStep % stepsAmount
-    timePoint.withValue(phase)
+    timePoint.withValue(phase.setScale(4, RoundingMode.HALF_UP))
   }
 
   override def restoreState(state: util.List[BigDecimal]): Unit = {

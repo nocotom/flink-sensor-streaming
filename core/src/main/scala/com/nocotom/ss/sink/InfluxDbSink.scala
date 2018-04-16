@@ -23,7 +23,6 @@ class InfluxDbSink[T <: ScalaNumber](val measurement: String) extends RichSinkFu
       parameters.getString("user", "admin"),
       parameters.getString("password", "admin"))
 
-    influxDB.createDatabase(databaseName)
     influxDB.enableBatch(2000, 100, TimeUnit.MILLISECONDS)
   }
 

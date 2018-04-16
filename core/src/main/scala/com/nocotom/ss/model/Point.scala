@@ -14,7 +14,7 @@ case class DataPoint[T <: ScalaNumber](timestamp: Long, value: T) {
 
 case class KeyedDataPoint[T <: ScalaNumber](timestamp: Long, value: T, key : String) {
 
-  override def toString: String = s"DataPoint{timestamp='$timestamp', value='$value', key='$key'}"
+  override def toString: String = s"KeyedDataPoint{timestamp='$timestamp', value='$value', key='$key'}"
 }
 
 object Point {
@@ -36,6 +36,12 @@ object Point {
 
     def withKey(key: String): KeyedDataPoint[T] ={
       KeyedDataPoint(dataPoint.timestamp, dataPoint.value, key)
+    }
+  }
+
+  implicit class RichKeyedDataPoint[T <: ScalaNumber](keyedDataPoint: KeyedDataPoint[T]){
+    def withNewValue(value: T) : KeyedDataPoint[T] = {
+      KeyedDataPoint[T](keyedDataPoint.timestamp, value, keyedDataPoint.key)
     }
   }
 

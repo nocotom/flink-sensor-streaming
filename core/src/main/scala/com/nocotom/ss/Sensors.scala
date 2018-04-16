@@ -1,14 +1,16 @@
 package com.nocotom.ss
 
 import com.nocotom.ss.function.{AssignKeyFunction, SawtoothFunction, SineFunction}
-import com.nocotom.ss.sink.InfluxDbSink
 import com.nocotom.ss.source.TimestampSource
 import org.apache.flink.streaming.api.TimeCharacteristic
+import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.api.scala._
+import com.nocotom.ss.model.Point._
+import com.nocotom.ss.sink.InfluxDbSink
 
 import scala.concurrent.duration._
 
-object Main {
+object Sensors {
   def main(args: Array[String]): Unit = {
     val env = StreamExecutionEnvironment.getExecutionEnvironment
     env.enableCheckpointing(1000)
@@ -16,12 +18,12 @@ object Main {
     env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
 
     val timestampStream = env
-      .addSource(new TimestampSource(1.seconds))
+      .addSource(new TimestampSource(100.milliseconds))
       .name("source")
 
     // Simulate temperature sensor
     val sawtoothStream = timestampStream
-      .map(new SawtoothFunction(amplitude = 3))
+      .map(new SawtoothFunction(stepsAmount = 10))
       .name("sawtooth(point)")
 
     val tempStream = sawtoothStream
@@ -30,7 +32,7 @@ object Main {
 
     // Simulate humidity sensor
     val sineStream = timestampStream
-      .map(new SineFunction(amplitude = 3))
+      .map(new SineFunction(stepsAmount = 10))
       .name("sine(point)")
 
     val humidityStream = sineStream
@@ -39,10 +41,19 @@ object Main {
 
     val sensorStream = tempStream.union(humidityStream)
 
-    //sensorStream.print()
-
     sensorStream
-      .addSink(new InfluxDbSink[BigDecimal]("sensors"));
+      .addSink(new InfluxDbSink[BigDecimal]("sensors"))
+
+    // Sum sensors data in window period
+    val summedSensorStream = sensorStream
+      .keyBy(_.key)
+      .timeWindow(Time.seconds(1))
+      .reduce{(p1, p2) => p1.withNewValue(p1.value + p2.value)}
+
+    summedSensorStream
+      .addSink(new InfluxDbSink[BigDecimal]("summedSensors"))
+
+    //sensorStream.print()
 
     env.execute()
   }

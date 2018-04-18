@@ -15,17 +15,21 @@ class Gate {
       notifyAll()
   }
 
-  def await(timeout: FiniteDuration = 0.second) : Boolean = synchronized {
+  def await(timeout: Duration = Duration.Inf) : Boolean = synchronized {
     val start = now
     var remaining = timeout
     var isBraked = false
     while (!_isOpen && !isBraked) {
-      wait(remaining.toMillis)
-      if(timeout > 0.second){
+      if(remaining == Duration.Zero){
+        isBraked = true
+      } else if(remaining > Duration.Zero && remaining.isFinite()){
+        wait(remaining.toMillis)
         remaining = timeout - now - start
-        if(remaining <= 0.second){
+        if(remaining <= Duration.Zero){
           isBraked = true
         }
+      } else {
+        wait()
       }
     }
     _isOpen

@@ -20,7 +20,6 @@
                 <version>3.1.0</version>
                 <executions>
                     <execution>
-                        <id>fat-jar-filter-songs</id>
                         <phase>package</phase>
                         <goals>
                             <goal>shade</goal>
@@ -34,7 +33,6 @@
                                     <mainClass>com.nocotom.ss.Sensors</mainClass>
                                 </transformer>
                             </transformers>
-                            <finalName>Sensors</finalName>
                             <filters>
                                 <filter>
                                     <artifact>*</artifact>

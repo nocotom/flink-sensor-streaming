@@ -1,23 +1,23 @@
-package com.nocotom.ss.model
+package com.nocotom.ss
 
 import scala.math.ScalaNumber
 
-case class TimePoint(timestamp: Long) {
+package object point {
 
-  override def toString: String = s"TimePoint{timestamp='$timestamp'}"
-}
+  case class TimePoint(timestamp: Long) {
 
-case class DataPoint[T <: ScalaNumber](timestamp: Long, value: T) {
+    override def toString: String = s"TimePoint{timestamp='$timestamp'}"
+  }
 
-  override def toString: String = s"DataPoint{timestamp='$timestamp', value='$value'}"
-}
+  case class DataPoint[T <: ScalaNumber](timestamp: Long, value: T) {
 
-case class KeyedDataPoint[T <: ScalaNumber](timestamp: Long, value: T, key : String) {
+    override def toString: String = s"DataPoint{timestamp='$timestamp', value='$value'}"
+  }
 
-  override def toString: String = s"KeyedDataPoint{timestamp='$timestamp', value='$value', key='$key'}"
-}
+  case class KeyedDataPoint[T <: ScalaNumber](timestamp: Long, value: T, key : String) {
 
-object Point {
+    override def toString: String = s"KeyedDataPoint{timestamp='$timestamp', value='$value', key='$key'}"
+  }
 
   implicit class RichTimePoint(timePoint: TimePoint){
     def withValue[T <: ScalaNumber](value: T) : DataPoint[T] = {

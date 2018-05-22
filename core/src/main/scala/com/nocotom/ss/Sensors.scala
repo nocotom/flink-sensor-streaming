@@ -5,7 +5,6 @@ import com.nocotom.ss.source.TimestampSource
 import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.api.scala._
-import com.nocotom.ss.model.Point._
 import com.nocotom.ss.sink.InfluxDbSink
 
 import scala.concurrent.duration._
@@ -19,7 +18,7 @@ object Sensors {
 
     val timestampStream = env
       .addSource(new TimestampSource(100.milliseconds))
-      .name("source")
+      .name("Timestamp Source")
 
     // Simulate temperature sensor
     val sawtoothStream = timestampStream
@@ -28,7 +27,7 @@ object Sensors {
 
     val tempStream = sawtoothStream
       .map(new AssignKeyFunction[BigDecimal]("temp"))
-      .name("assignKey(point)")
+      .name("assignKey(temp)")
 
     // Simulate humidity sensor
     val sineStream = timestampStream
@@ -43,18 +42,21 @@ object Sensors {
 
     sensorStream
       .addSink(new InfluxDbSink[BigDecimal]("sensors"))
+      .name("Sensors Data")
 
     // Sum sensors data in window period
     val summedSensorStream = sensorStream
       .keyBy(_.key)
       .timeWindow(Time.seconds(1))
       .reduce{(p1, p2) => p1.withNewValue(p1.value + p2.value)}
+      .name("sum(p1, p2)")
 
     summedSensorStream
       .addSink(new InfluxDbSink[BigDecimal]("summedSensors"))
+      .name("Summed Sensors Data")
 
     //sensorStream.print()
 
-    env.execute()
+    env.execute("Sensor Streaming")
   }
 }

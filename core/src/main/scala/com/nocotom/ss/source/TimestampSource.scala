@@ -3,7 +3,7 @@ package com.nocotom.ss.source
 import java.util.concurrent.TimeUnit
 import java.{lang, util}
 
-import com.nocotom.ss.model.TimePoint
+import com.nocotom.ss.point.TimePoint
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.checkpoint.ListCheckpointed
 import org.apache.flink.streaming.api.functions.source.{RichParallelSourceFunction, SourceFunction}

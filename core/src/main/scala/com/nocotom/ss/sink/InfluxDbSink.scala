@@ -2,7 +2,7 @@ package com.nocotom.ss.sink
 
 import java.util.concurrent.TimeUnit
 
-import com.nocotom.ss.model.KeyedDataPoint
+import com.nocotom.ss.point.KeyedDataPoint
 import org.apache.flink.configuration.Configuration
 import org.apache.flink.streaming.api.functions.sink.RichSinkFunction
 import org.influxdb.dto.Point

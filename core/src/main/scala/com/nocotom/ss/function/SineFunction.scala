@@ -2,8 +2,7 @@ package com.nocotom.ss.function
 
 import java.{lang, util}
 
-import com.nocotom.ss.model.Point._
-import com.nocotom.ss.model.{DataPoint, TimePoint}
+import com.nocotom.ss.point.{DataPoint, TimePoint}
 import org.apache.flink.api.common.functions.RichMapFunction
 import org.apache.flink.streaming.api.checkpoint.ListCheckpointed
 

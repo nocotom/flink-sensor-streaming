@@ -1,7 +1,6 @@
 package com.nocotom.ss.function
 
-import com.nocotom.ss.model.{DataPoint, KeyedDataPoint}
-import com.nocotom.ss.model.Point._
+import com.nocotom.ss.point.{DataPoint, KeyedDataPoint}
 import org.apache.flink.api.common.functions.MapFunction
 
 import scala.math.ScalaNumber

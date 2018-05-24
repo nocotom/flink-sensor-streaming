@@ -3,10 +3,10 @@ services:
   influxdb:
     image: influxdb:1.5-alpine
     container_name: influxdb
+    expose:
+      - "8086"
     ports:
-      - "8083:8083"
       - "8086:8086"
-      - "8090:8090"
     environment:
       - INFLUXDB_DB=sensors
       - INFLUXDB_USER=admin
@@ -25,8 +25,6 @@ services:
     expose:
       - "6123"
     ports:
-      - "6123:6123"
-      - "6124:6124"
       - "8081:8081"
     command: jobmanager
     environment:
@@ -37,9 +35,6 @@ services:
     expose:
       - "6121"
       - "6122"
-    ports:
-      - "6121:6121"
-      - "6122:6122"
     depends_on:
       - jobmanager
     command: taskmanager

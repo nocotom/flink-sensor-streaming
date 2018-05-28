@@ -12,15 +12,15 @@ import org.apache.flink.streaming.api.watermark.Watermark
 import scala.collection.JavaConversions._
 import scala.concurrent.duration.{Duration, FiniteDuration}
 
-class TimestampSource(private val period: FiniteDuration)
+class TimestampSource(private val period: FiniteDuration, private val slowdownFactor: Int = 1)
   extends RichParallelSourceFunction[TimePoint]
     with ListCheckpointed[lang.Long] {
 
   private lazy val gate = new Gate()
-  private var currentTime : Long = 0L
+  private var currentTime: Long = 0L
 
   override def open(parameters: Configuration): Unit = {
-    if(currentTime == 0){
+    if (currentTime == 0) {
       currentTime = now
     }
   }
@@ -30,7 +30,7 @@ class TimestampSource(private val period: FiniteDuration)
   override def run(sourceContext: SourceFunction.SourceContext[TimePoint]): Unit = {
     val lock = sourceContext.getCheckpointLock
 
-    while(!gate.await(sleepTime)){
+    while (!gate.await(sleepTime)) {
       lock.synchronized({
         sourceContext.collectWithTimestamp(TimePoint(currentTime), currentTime)
         sourceContext.emitWatermark(new Watermark(currentTime))
@@ -49,9 +49,12 @@ class TimestampSource(private val period: FiniteDuration)
     util.Collections.singletonList(currentTime)
   }
 
-  private def sleepTime : FiniteDuration = {
-    val time = currentTime - now + period.toMillis
-    if(time > 0) FiniteDuration.apply(time, TimeUnit.MILLISECONDS) else Duration.Zero
+  private def sleepTime: FiniteDuration = {
+    var time = currentTime - now + period.toMillis
+    if (slowdownFactor > 1) {
+      time = period.toMillis * slowdownFactor
+    }
+    if (time > 0) FiniteDuration.apply(time, TimeUnit.MILLISECONDS) else Duration.Zero
   }
 
   private def now = System.currentTimeMillis

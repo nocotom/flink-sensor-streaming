@@ -6,18 +6,21 @@ import org.apache.flink.streaming.api.TimeCharacteristic
 import org.apache.flink.streaming.api.windowing.time.Time
 import org.apache.flink.streaming.api.scala._
 import com.nocotom.ss.sink.InfluxDbSink
+import org.apache.flink.api.java.utils.ParameterTool
 
 import scala.concurrent.duration._
 
 object Sensors {
   def main(args: Array[String]): Unit = {
+    val parameters = ParameterTool.fromArgs(args)
     val env = StreamExecutionEnvironment.getExecutionEnvironment
+    env.getConfig.setGlobalJobParameters(parameters)
     env.enableCheckpointing(1000)
     env.setParallelism(1)
     env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
 
     val timestampStream = env
-      .addSource(new TimestampSource(100.milliseconds))
+      .addSource(new TimestampSource(period = 100.milliseconds, slowdownFactor = 1))
       .name("Timestamp Source")
 
     // Simulate temperature sensor
@@ -55,6 +58,7 @@ object Sensors {
       .addSink(new InfluxDbSink[BigDecimal]("summedSensors"))
       .name("Summed Sensors Data")
 
+    //println(env.getExecutionPlan)
     //sensorStream.print()
 
     env.execute("Sensor Streaming")

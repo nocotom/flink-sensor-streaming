@@ -1,44 +1,27 @@
-version: '3'
+version: '3.5'
+networks:
+  sensor-streaming:
+    name: sensor-streaming
+    driver: bridge
 services:
   influxdb:
-    image: influxdb:1.5-alpine
+    image: influxdb:1.6-alpine
     container_name: influxdb
-    expose:
-      - "8086"
     ports:
-      - "8086:8086"
+    - "8086:8086"
     environment:
-      - INFLUXDB_DB=sensors
-      - INFLUXDB_USER=admin
-      - INFLUXDB_USER_PASSWORD=admin
+    - INFLUXDB_DB=sensors
+    - INFLUXDB_USER=admin
+    - INFLUXDB_USER_PASSWORD=admin
+    networks:
+    - sensor-streaming
   grafana:
-    image: grafana/grafana:5.0.3
+    image: grafana/grafana:5.3.1
     container_name: grafana
     ports:
-      - "3000:3000"
+    - "3000:3000"
     volumes:
-      - ./env/grafana/provisioning:/etc/grafana/provisioning
-      - ./env/grafana/dashboards:/var/lib/grafana/dashboards
-  jobmanager:
-    image: flink:1.4-alpine
-    container_name: jobmanager
-    expose:
-      - "6123"
-    ports:
-      - "8081:8081"
-    command: jobmanager
-    environment:
-      - JOB_MANAGER_RPC_ADDRESS=jobmanager
-  taskmanager:
-    image: flink:1.4-alpine
-    container_name: taskmanager
-    expose:
-      - "6121"
-      - "6122"
-    depends_on:
-      - jobmanager
-    command: taskmanager
-    links:
-      - "jobmanager:jobmanager"
-    environment:
-      - JOB_MANAGER_RPC_ADDRESS=jobmanager
+    - ./env/grafana/provisioning:/etc/grafana/provisioning
+    - ./env/grafana/dashboards:/var/lib/grafana/dashboards
+    networks:
+    - sensor-streaming

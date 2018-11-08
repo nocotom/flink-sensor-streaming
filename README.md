@@ -7,6 +7,7 @@ This project is an exemplary Apache Flink application for testing purposes.
 * Scala 2.11+
 * Maven
 * Docker compose
+* Flink 1.6+
 
 ## Running locally
 
@@ -14,8 +15,6 @@ There is prepared the ``docker-compose.yaml`` file which allows you to run the f
 
 * ``InfluxDb`` - storage for processed events (sink)
 * ``Grafana`` - data visualization
-* ``Job Manager`` - Flink's job manager
-* ``Task Manager`` - Flink's task manager
 
 To run all services, execute the following command:
 
@@ -29,11 +28,10 @@ To crate Flink's job (java library), execute the following command:
 mvn package
 ```
 
-To deploy job, go to the [submit page](http://localhost:8081/#/submit), select compiled java library 
-and submit job with the following program arguments:
+To deploy job, run the following command:
 
-```
---influx.url http://influxdb:8086
+```bash
+flink run -d core\target\sensor-streaming-core-1.0-SNAPSHOT.jar
 ```
 
 Finally, go to the [Grafana page](http://localhost:3000), login as ``admin:admin`` and go to the ``Sensors`` dashboard.

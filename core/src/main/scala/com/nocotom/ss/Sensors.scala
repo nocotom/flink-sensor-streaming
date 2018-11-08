@@ -20,7 +20,7 @@ object Sensors {
     env.setStreamTimeCharacteristic(TimeCharacteristic.EventTime)
 
     val timestampStream = env
-      .addSource(new TimestampSource(period = 100.milliseconds, slowdownFactor = 1))
+      .addSource(new TimestampSource(period = 500.milliseconds, slowdownFactor = 1))
       .name("Timestamp Source")
 
     // Simulate temperature sensor
@@ -50,7 +50,7 @@ object Sensors {
     // Sum sensors data in window period
     val summedSensorStream = sensorStream
       .keyBy(_.key)
-      .timeWindow(Time.seconds(1))
+      .timeWindow(Time.seconds(5))
       .reduce{(p1, p2) => p1.withNewValue(p1.value + p2.value)}
       .name("sum(p1, p2)")
 
